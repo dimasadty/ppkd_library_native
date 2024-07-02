@@ -1,0 +1,15 @@
+table { 
+    table-layout:fixed;
+}
+td { 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    word-wrap: break-word;
+}
+@media only screen and (max-width: 480px) {
+    /* horizontal scrollbar for tables if mobile screen */
+    .tablemobile {
+        overflow-x: auto;
+        display: block;
+    }
+}

@@ -15,28 +15,7 @@ $result = $db_library->query($query);
 if ($result) {
     $books = $result->fetchAll(PDO::FETCH_ASSOC);
 } else {
-    echo "Query failed: " . $db_library->errorInfo()[2];
-}
-
-// If the form is submitted, handle the form data
-if (isset($_POST['submit'])) {
-    $booksname = $_POST['booksname'];
-    $bookstype = $_POST['bookstype'];
-    $booksdesc = $_POST['booksdesc'];
-    $booksimage = $_POST['booksimage'];
-
-    $insertbooks = $db_library->prepare("INSERT INTO books (booksname, bookstype, booksdesc, booksimage) VALUES (:booksname, :bookstype, :booksdesc, :booksimage)");
-    if ($insertbooks->execute([
-        $booksname,
-        $bookstype,
-        $booksdesc,
-        $booksimage,
-    ])) {
-        header("location:/library/pagesbooks/index.php?notif=success");
-        exit;
-    } else {
-        echo "Error: " . $insertbooks->errorInfo()[2];
-    }
+    echo "Query failed: ". $db_library->errorInfo()[2];
 }
 
 // If the delete parameter is present, delete the user
@@ -47,44 +26,78 @@ if (isset($_GET['delete'])) {
         header("location:/library/pagesbooks/index.php?notif=delete-success");
         exit;
     } else {
-        echo "Error: " . $delete->errorInfo()[2];
+        echo "Error: ". $delete->errorInfo()[2];
     }
 }
 
 // If the edit parameter is present, get the user data for editing
 if (isset($_GET['edit'])) {
     $id = $_GET['edit'];
-    $editQuery = "SELECT * FROM books WHERE id = ?";
+    $editQuery = "SELECT * FROM books WHERE id =?";
     $stmt = $db_library->prepare($editQuery);
     if ($stmt->execute([$id])) {
         $dataEdit = $stmt->fetch(PDO::FETCH_ASSOC);
     } else {
-        echo "Fetch failed: " . $db_library->errorInfo()[2];
+        echo "Fetch failed: ". $db_library->errorInfo()[2];
     }
 }
 
 // If the edit form is submitted, update the user data
 if (isset($_POST['edit'])) {
-    $id = $_POST['id'];
     $booksname = $_POST['booksname'];
+    $booksauthor = $_POST['booksauthor'];
+    $bookspublisher = $_POST['bookspublisher'];
+    $booksquantity = $_POST['booksquantity'];
+    $booksyear = $_POST['booksyear'];
     $bookstype = $_POST['bookstype'];
     $booksdesc = $_POST['booksdesc'];
-    $booksdesc = $_POST['booksimage'];
     $id = $_GET['edit'];
 
-    $edit = $db_library->prepare("UPDATE books SET booksname=?, bookstype=?, booksdesc=? WHERE id=?");
-    if ($edit->execute([
-        $booksname,
-        $bookstype,
-        $booksdesc,
-        $booksimage,
+    $stmt = $db_library->prepare("UPDATE books SET booksname = :booksname, booksauthor = :booksauthor, bookspublisher = :bookspublisher, booksquantity = :booksquantity, booksyear = :booksyear, bookstype = :bookstype, booksdesc = :booksdesc  WHERE id = :id");
+    $stmt->execute([
+        ':booksname' => $booksname,
+        ':booksauthor' => $booksauthor,
+        ':bookspublisher' => $bookspublisher,
+        ':booksquantity' => $booksquantity,
+        ':booksyear' => $booksyear,
+        ':bookstype' => $bookstype,
+        ':booksdesc' => $booksdesc,
+        ':id' => $id,
+    ]);
+    header("location:/library/pagesbooks/index.php?notif=edit-success");
+}
+if (isset($_POST['submit'])) {
+    $booksname = $_POST['booksname'];
+    $booksauthor = $_POST['booksauthor'];
+    $bookspublisher = $_POST['bookspublisher'];
+    $booksquantity = $_POST['booksquantity'];
+    $booksyear = $_POST['booksyear'];
+    $bookstype = $_POST['bookstype'];
+    $booksdesc = $_POST['booksdesc'];
+    // $id_booksimage = $_FILES['images'];
 
-    ])) {
-        header("location:/library/pagesbooks/index.php?notif=edit-success");
-        exit;
+    // Check if all fields are set and not empty
+    if (!empty($booksname) && !empty($bookstype) && !empty($booksdesc)) {
+                    $insert = $db_library->prepare("INSERT INTO books (booksname, booksauthor, bookspublisher, booksquantity, booksyear, bookstype, booksdesc) VALUES (?,?,?,?,?,?,?)");
+                    if ($insert->execute([
+                        $booksname,
+                        $booksauthor,
+                        $bookspublisher,
+                        $booksquantity,
+                        $booksyear,
+                        $bookstype,
+                        $booksdesc,
+                        // $target_file
+                    ])) {
+                        header("location:/library/pagesbooks/index.php?notif=add-success");
+                        exit;
+                    } else {
+                        echo "Error: ". $insert->errorInfo()[2];
+                    }
     } else {
-        echo "Error: " . $edit->errorInfo()[2];
-    }
+        echo "Please fill in all fields.";
+}
+
 }
 ?>
 <!DOCTYPE html>
@@ -109,70 +122,109 @@ if (isset($_POST['edit'])) {
         <!-- partial -->
         <!-- main panel -->
         <div class="container-fluid">
-
             <!-- Page Heading -->
             <?php if (isset($_GET['edit'])) { ?>
-                <h1 class="h3 mb-4 text-gray-800">books</h1>
-                <div class="card">
-                    <div class="card-header">Change books</div>
-                    <div class="card-body">
-                        <form action="" method="post" enctype="multipart/form-data">
-                            <div class="mb-3">
-                                <label for="name"></label>
-                                <input value="<?php echo $dataEdit['booksname'] ?>" type="text" class="form-control" name="booksname" placeholder="books name...">
-                            </div>
-                            <div class="mb-3">
-                                <label for="name"></label>
-                                <input value="<?php echo $dataEdit['bookstype'] ?>" type="text" class="form-control" name="bookstype" placeholder="books type...">
-                            </div>
-                            <div class="mb-3">
-                                <label for="name"></label>
-                                <input value="<?php echo $dataEdit['booksdesc'] ?>" type="text" class="form-control" name="booksdesc" placeholder="books description...">
-                            </div>
-                            <div class="mb-3">
-                                <label for="name"></label>
-                                <input type="text">
-                                <input value="<?php echo $dataEdit['booksimage'] ?>" type="file" name="booksimage">
-                                </br>
-                            </div>
-                            <div class="mb-3">
-                                <input name="edit" type="submit" class="btn btn-primary" value="submit">
-                                <a href="/library/pagesbooks/index.php" class="btn btn-danger">Cancel</a>
-                            </div>
-                        </form>
-                    </div>
-                <?php } else { ?>
-                    <h1 class="h3 mb-4 text-gray-800">Add More</h1>
-                    <div class="card-body">
-                        <div class="card-header"></div>
-                        <div class="card-body">
-                            <form action="" method="post" enctype="multipart/form-data">
-                                <div class="mb-3">
-                                    <label for="name"></label>
-                                    <input type="text" class="form-control" name="booksname" placeholder="books name...">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="name"></label>
-                                    <input type="text" class="form-control" name="bookstype" placeholder="books type...">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="name"></label>
-                                    <input type="text" class="form-control" name="booksdesc" placeholder="books description...">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="name"></label>
-                                    <input value="<?php echo $dataEdit['booksimage'] ?>" type="file" name="booksimage">
-                                    </br>
-                                </div>
-                                <div class="mb-3">
-                                    <input name="submit" type="submit" class="btn btn-primary" value="submit">
-                                    <a href="/library/pagesbooks/index.php" class="btn btn-danger">Cancel</a>
-                                </div>
-                            </form>
+            <h1 class="h3 mb-4 text-gray-800">books</h1>
+            <div class="card">
+                <div class="card-header">Change books</div>
+                <div class="card-body">
+                    <form action="" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input value="<?php echo $dataEdit['booksname'] ?>" type="text" class="form-control"
+                                name="booksname" placeholder="books name...">
                         </div>
-                    <?php } ?>
-                    </div>
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input value="<?php echo $dataEdit['booksauthor'] ?>" type="text" class="form-control"
+                                name="booksauthor" placeholder="books author...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input value="<?php echo $dataEdit['bookspublisher'] ?>" type="text" class="form-control"
+                                name="bookspublisher" placeholder="books publisher...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input value="<?php echo $dataEdit['booksquantity'] ?>" type="number" class="form-control"
+                                name="booksquantity" placeholder="books quantity...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input value="<?php echo $dataEdit['booksyear'] ?>" type="date" class="form-control"
+                                name="booksyear" placeholder="books year release...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input value="<?php echo $dataEdit['bookstype'] ?>" type="text" class="form-control"
+                                name="bookstype" placeholder="books type...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input value="<?php echo $dataEdit['booksdesc'] ?>" type="text" class="form-control"
+                                name="booksdesc" placeholder="books description...">
+                        </div>
+                        <!-- <div class="mb-3">
+                                <label for="name">Current Image:</label>
+                                <img src="<?php echo $dataEdit['id_booksimage'] ?>" alt="Book Image" width="100">
+                                <input type="file" class="form-control" name="id_booksimage">
+                            </div> -->
+                        <div class="mb-3">
+                            <input name="edit" type="submit" class="btn btn-primary" value="submit">
+                            <a href="/library/pagesbooks/index.php" class="btn btn-danger">Cancel</a>
+                        </div>
+                    </form>
                 </div>
+            </div>
+            <?php } else { ?>
+            <h1 class="h3 mb-4 text-gray-800">Add More</h1>
+            <div class="card">
+                <div class="card-header">Add books</div>
+                <div class="card-body">
+                    <form action="" method="post" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input type="text" class="form-control" name="booksname" placeholder="books name...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input type="text" class="form-control" name="booksauthor" placeholder="books author...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input type="text" class="form-control" name="bookspublisher"
+                                placeholder="books publisher...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input type="number" class="form-control" name="booksquantity"
+                                placeholder="books quantity...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input type="date" class="form-control" name="booksyear"
+                                placeholder="books year release...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input type="text" class="form-control" name="bookstype" placeholder="books type...">
+                        </div>
+                        <div class="mb-3">
+                            <label for="name"></label>
+                            <input type="text" class="form-control" name="booksdesc" placeholder="books description...">
+                        </div>
+                        <!-- <div class="mb-3">
+                                <label for="name"></label>
+                                <input type="file" name="images">
+                            </div> -->
+                        <div class="mb-3">
+                            <input name="submit" type="submit" class="btn btn-primary" value="submit">
+                            <a href="/library/pagesbooks/index.php" class="btn btn-danger">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <?php } ?>
         </div>
         <!-- main-panel ends -->
     </div>

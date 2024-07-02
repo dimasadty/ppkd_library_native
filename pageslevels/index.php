@@ -114,7 +114,7 @@ if (isset($_POST['edit'])) {
                             <td><?php echo $no++; ?></td>
                             <td><?php echo $dataLevels['level_name']; ?></td>
                             <td>
-                                <a href="/library/pageslevels/index.php?edit=<?php echo $dataLevels['id']; ?>" class="btn btn-primary btn-sm">Change levels</a>
+                                <a href="/library/pageslevels/add.php?edit=<?php echo $dataLevels['id']; ?>" class="btn btn-primary btn-sm">Change levels</a>
                                 <a onclick="return confirm('Are You Sure To Delete This Data?')" href="/library/pageslevels/index.php?delete=<?php echo $dataLevels['id']; ?>" class="btn btn-danger btn-sm">Delete</a>
                             </td>
                         </tr>
@@ -122,7 +122,7 @@ if (isset($_POST['edit'])) {
                     </tbody>
                 </table>
             </div>
-            <?php if (isset($_GET['edit'])) { ?>
+            <!-- ?php if (isset($_GET['edit'])) { ?>
                 <div class="modal fade show" tabindex="-1" role="dialog" style="display:block; background: rgba(0,0,0,0.5);">
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
@@ -148,7 +148,7 @@ if (isset($_POST['edit'])) {
                         </div>
                     </div>
                 </div>
-            <?php } ?>
+            ?php } ?> -->
         </div>
         <!-- main-panel ends -->
     </div>
