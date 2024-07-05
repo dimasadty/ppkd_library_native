@@ -6,13 +6,15 @@ if (!isset($_SESSION['name'])) {
     header("location:../library/login.php?error-access-failed");
     exit;
 }
-
 $query = "SELECT users.*, levels.level_name FROM users LEFT JOIN levels ON levels.id = users.id_level ORDER BY users.id DESC";
 $result = $db_library->query($query);
 if ($result) {
-    $users = $result->fetchAll(PDO::FETCH_ASSOC);
+    $users = [];
+    while ($row = $result->fetch_assoc()) {
+        $users[] = $row;
+    }
 } else {
-    echo "Query failed: " . $db_library->errorInfo()[2];
+    echo "Query failed: " . $db_library->error;
 }
 
 // If the form is submitted, handle the form data
@@ -23,24 +25,28 @@ if (isset($_POST['submit'])) {
     $password = sha1($_POST['password']); // Hash the password using SHA-1
 
     $insertusers = $db_library->prepare("INSERT INTO users (name, email, id_level, password) VALUES (?, ?, ?, ?)");
-    if ($insertusers->execute([$name, $email, $id_level, $password])) {
+    $insertusers->bind_param("ssis", $name, $email, $id_level, $password); // Bind parameters
+    if ($insertusers->execute()) {
         header("location:/library/pagesusers/index.php?notif=success");
         exit;
     } else {
-        echo "Error: " . $insertusers->errorInfo()[2];
+        echo "Error: " . $insertusers->error;
     }
+    $insertusers->close(); // Close statement
 }
 
 // If the delete parameter is present, delete the users
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
     $delete = $db_library->prepare("DELETE FROM users WHERE id=?");
-    if ($delete->execute([$id])) {
+    $delete->bind_param("i", $id); // Bind parameters
+    if ($delete->execute()) {
         header("location:users.php?notif=delete-success");
         exit;
     } else {
-        echo "Error: " . $delete->errorInfo()[2];
+        echo "Error: " . $delete->error;
     }
+    $delete->close(); // Close statement
 }
 
 // If the edit parameter is present, get the users data for editing
@@ -48,11 +54,14 @@ if (isset($_GET['edit'])) {
     $id = $_GET['edit'];
     $editQuery = "SELECT * FROM users WHERE id = ?";
     $stmt = $db_library->prepare($editQuery);
-    if ($stmt->execute([$id])) {
-        $dataEdit = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt->bind_param("i", $id); // Bind parameters
+    if ($stmt->execute()) {
+        $result = $stmt->get_result();
+        $dataEdit = $result->fetch_assoc();
     } else {
-        echo "Fetch failed: " . $db_library->errorInfo()[2];
+        echo "Fetch failed: " . $db_library->error;
     }
+    $stmt->close(); // Close statement
 }
 
 // If the edit form is submitted, update the users data
@@ -60,16 +69,18 @@ if (isset($_POST['edit'])) {
     $id = $_POST['id'];
     $name = $_POST['name'];
     $email = $_POST['email'];
-    $levels = $_POST['id_level'];
+    $id_level = $_POST['id_level'];
     $password = sha1($_POST['password']); // Hash the password using SHA-1
 
     $edit = $db_library->prepare("UPDATE users SET name=?, email=?, id_level=?, password=? WHERE id=?");
-    if ($edit->execute([$name, $email, $levels, $password, $id])) {
+    $edit->bind_param("ssisi", $name, $email, $id_level, $password, $id); // Bind parameters
+    if ($edit->execute()) {
         header("location:/library/pagesusers/index.php?notif=edit-success");
         exit;
     } else {
-        echo "Error: " . $edit->errorInfo()[2];
+        echo "Error: " . $edit->error;
     }
+    $edit->close(); // Close statement
 }
 ?>
 
@@ -112,7 +123,7 @@ if (isset($_POST['edit'])) {
                                             <option value="">Select levels</option>
                                             <?php
                                             $querylevels = $db_library->query("SELECT * FROM levels");
-                                            while ($datalevels = $querylevels->fetch(PDO::FETCH_ASSOC)) {
+                                            while ($datalevels = $querylevels->fetch_assoc()) {
                                             ?>
                                                 <option value="<?php echo $datalevels['id']; ?>" <?php if ($dataEdit['id_level'] == $datalevels['id']) echo 'selected'; ?>>
                                                     <?php echo $datalevels['level_name']; ?>
@@ -150,7 +161,7 @@ if (isset($_POST['edit'])) {
                                             <option value="">Select levels</option>
                                             <?php
                                             $querylevels = $db_library->query("SELECT * FROM levels");
-                                            while ($datalevels = $querylevels->fetch(PDO::FETCH_ASSOC)) {
+                                            while ($datalevels = $querylevels->fetch_assoc()) {
                                             ?>
                                                 <option value="<?php echo $datalevels['id']; ?>">
                                                     <?php echo $datalevels['level_name']; ?>

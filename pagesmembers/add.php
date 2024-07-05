@@ -11,20 +11,19 @@ if (!isset($_SESSION['name'])) {
 include '../config/config.php';
 include('../fetch_user.php');
 
-// Check if the connection is established
+// Query to fetch members
 $query = "SELECT * FROM members ORDER BY id DESC";
 $result = $db_library->query($query);
+$memberss = [];
 if ($result) {
-    $memberss = $result->fetchAll(PDO::FETCH_ASSOC);
+    while ($row = $result->fetch_assoc()) {
+        $memberss[] = $row;
+    }
 } else {
-    echo "Query failed: " . $db_library->errorInfo()[2];
+    echo "Query failed: " . $db_library->error;
 }
 
-
-// Fetch members
-$querymembers = $db_library->query("SELECT * FROM members ORDER BY id DESC");
-
-// Insert members
+// Insert member
 if (isset($_POST['submit'])) {
     $name = $_POST['name'];
     $birthplace = $_POST['birthplace'];
@@ -37,38 +36,37 @@ if (isset($_POST['submit'])) {
     $job = $_POST['job'];
     $socialmedia = $_POST['socialmedia'];
 
-    $stmt = $db_library->prepare("INSERT INTO members (name, birthplace, birthdate, email, phone, gender, address, school, job, socialmedia) VALUES (:name, :birthplace, :birthdate, :email, :phone, :gender, :address, :school, :job, :socialmedia)");
-    $stmt->execute([
-        ':name' => $name,
-        ':email' => $email,
-        ':birthplace' => $birthplace,
-        ':birthdate' => $birthdate,
-        ':phone' => $phone,
-        ':gender' => $gender,
-        ':address' => $address,
-        ':school' => $school,
-        ':job' => $job,
-        ':socialmedia' => $socialmedia,
-    ]);
-
-    header("location:/library/pagesmembers/index.php?notif=success");
-    exit;
+    $stmt = $db_library->prepare("INSERT INTO members (name, birthplace, birthdate, email, phone, gender, address, school, job, socialmedia) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("ssssssssss", $name, $birthplace, $birthdate, $email, $phone, $gender, $address, $school, $job, $socialmedia);
+    if ($stmt->execute()) {
+        header("location:/library/pagesmembers/index.php?notif=success");
+        exit;
+    } else {
+        echo "Error: " . $stmt->error;
+    }
 }
 
-// Delete members
+// Delete member
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
-    $stmt = $db_library->prepare("DELETE FROM members WHERE id = :id");
-    $stmt->execute([':id' => $id]);
-    header("location:/library/pagesmembers/index.php?notif=delete-success");
+    $stmt = $db_library->prepare("DELETE FROM members WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    if ($stmt->execute()) {
+        header("location:/library/pagesmembers/index.php?notif=delete-success");
+        exit;
+    } else {
+        echo "Error: " . $stmt->error;
+    }
 }
 
-// Edit members
+// Edit member
 if (isset($_GET['edit'])) {
     $id = $_GET['edit'];
-    $stmt = $db_library->prepare("SELECT * FROM members WHERE id = :id");
-    $stmt->execute([':id' => $id]);
-    $dataEdit = $stmt->fetch(PDO::FETCH_ASSOC);
+    $stmt = $db_library->prepare("SELECT * FROM members WHERE id = ?");
+    $stmt->bind_param("i", $id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $dataEdit = $result->fetch_assoc();
 }
 
 if (isset($_POST['edit'])) {
@@ -81,26 +79,17 @@ if (isset($_POST['edit'])) {
     $address = $_POST['address'];
     $school = $_POST['school'];
     $job = $_POST['job'];
-    $id_major = $_POST['id_major'];
     $socialmedia = $_POST['socialmedia'];
     $id = $_GET['edit'];
 
-    $stmt = $db_library->prepare("UPDATE members SET name = :name, birthplace = :birthplace, birthdate = :birthdate, email = :email, phone = :phone, gender = :gender, address = :address, school = :school, job = :job, socialmedia = :socialmedia,  WHERE id = :id");
-    $stmt->execute([
-        ':name' => $name,
-        ':birthplace' => $birthplace,
-        ':birthdate' => $birthdate,
-        ':email' => $email,
-        ':phone' => $phone,
-        ':gender' => $gender,
-        ':address' => $address,
-        ':school' => $school,
-        ':job' => $job,
-        ':socialmedia' => $socialmedia,
-        ':id' => $id,
-    ]);
-
-    header("location:/library/pagesmembers/index.php?notif=edit-success");
+    $stmt = $db_library->prepare("UPDATE members SET name = ?, birthplace = ?, birthdate = ?, email = ?, phone = ?, gender = ?, address = ?, school = ?, job = ?, socialmedia = ? WHERE id = ?");
+    $stmt->bind_param("ssssssssssi", $name, $birthplace, $birthdate, $email, $phone, $gender, $address, $school, $job, $socialmedia, $id);
+    if ($stmt->execute()) {
+        header("location:/library/pagesmembers/index.php?notif=edit-success");
+        exit;
+    } else {
+        echo "Error: " . $stmt->error;
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -141,86 +130,129 @@ if (isset($_POST['edit'])) {
                                         <?php if (isset($_GET['edit'])) { ?>
 
                                             <div class="text-center">
-                                                <h1 class="h4 text-gray-900 mb-4">Pendaftaran Pelatihan - PPKD Jakarta Pusat
+                                                <h1 class="h4 text-gray-900 mb-4">Library Member - PPKD Jakarta Pusat
                                                 </h1>
                                             </div>
                                             <form class="user" method="post">
                                                 <!-- input form -->
                                                 <div class="form-group">
-                                                    <input name="name" type="text" class="form-control form-control-user" value="<?php echo $dataEdit['name']; ?>" placeholder="Name...">
+                                                    <input name="name" type="text" class="form-control form-control-user"
+                                                        value="<?php echo htmlspecialchars($dataEdit['name']); ?>"
+                                                        placeholder="Name...">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="birthplace" type="text" class="form-control form-control-user" value="<?php echo $dataEdit['birthplace']; ?>" placeholder="Birth Place...">
+                                                    <input name="birthplace" type="text"
+                                                        class="form-control form-control-user"
+                                                        value="<?php echo htmlspecialchars($dataEdit['birthplace']); ?>"
+                                                        placeholder="Birth Place...">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="birthdate" type="date" class="form-control form-control-user" value="<?php echo $dataEdit['birthdate']; ?>">
+                                                    <input name="birthdate" type="date"
+                                                        class="form-control form-control-user"
+                                                        value="<?php echo htmlspecialchars($dataEdit['birthdate']); ?>">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="email" class="form-control form-control-user" value="<?php echo $dataEdit['email']; ?>" type="email" placeholder="Email...">
+                                                    <input name="email" class="form-control form-control-user"
+                                                        value="<?php echo htmlspecialchars($dataEdit['email']); ?>"
+                                                        type="email" placeholder="Email...">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="phone" type="tel" class="form-control form-control-user" value="<?php echo $dataEdit['phone']; ?>" placeholder="Phone Number...">
+                                                    <input name="phone" type="tel"
+                                                        class="form-control form-control-user"
+                                                        value="<?php echo htmlspecialchars($dataEdit['phone']); ?>"
+                                                        placeholder="Phone Number...">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="gender" type="radio" id="gender" value="Men" <?php if ($dataEdit['gender'] == 'Men') echo 'checked'; ?>> Men
-                                                    <input name="gender" type="radio" id="gender" value="Women" <?php if ($dataEdit['gender'] == 'Women') echo 'checked'; ?>> Women
+                                                    <input name="gender" type="radio" id="gender" value="Men"
+                                                        <?php if ($dataEdit['gender'] == 'Men') echo 'checked'; ?>> Men
+                                                    <input name="gender" type="radio" id="gender" value="Women"
+                                                        <?php if ($dataEdit['gender'] == 'Women') echo 'checked'; ?>>
+                                                    Women
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="address" type="text" class="form-control form-control-user" value="<?php echo $dataEdit['address']; ?>" placeholder="Address...">
+                                                    <input name="address" type="text"
+                                                        class="form-control form-control-user"
+                                                        value="<?php echo htmlspecialchars($dataEdit['address']); ?>"
+                                                        placeholder="Address...">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="school" type="text" class="form-control form-control-user" value="<?php echo $dataEdit['school']; ?>" placeholder="Education School...">
+                                                    <input name="school" type="text"
+                                                        class="form-control form-control-user"
+                                                        value="<?php echo htmlspecialchars($dataEdit['school']); ?>"
+                                                        placeholder="Education School...">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="job" type="text" class="form-control form-control-user" value="<?php echo $dataEdit['job']; ?>" placeholder="Job...">
+                                                    <input name="job" type="text"
+                                                        class="form-control form-control-user"
+                                                        value="<?php echo htmlspecialchars($dataEdit['job']); ?>"
+                                                        placeholder="Job...">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="socialmedia" type="text" class="form-control form-control-user" value="<?php echo $dataEdit['socialmedia']; ?>" placeholder="Social Media">
+                                                    <input name="socialmedia" type="text"
+                                                        class="form-control form-control-user"
+                                                        value="<?php echo htmlspecialchars($dataEdit['socialmedia']); ?>"
+                                                        placeholder="Social Media">
                                                 </div>
-                                                <button type="submit" name="edit" class="btn btn-primary btn-user btn-block">
+                                                <button type="submit" name="edit"
+                                                    class="btn btn-primary btn-user btn-block">
                                                     Edit Data
                                                 </button>
                                                 <hr>
                                             </form>
                                         <?php } else { ?>
                                             <div class="text-center">
-                                                <h1 class="h4 text-gray-900 mb-4">Pendaftaran Pelatihan - PPKD Jakarta Pusat
+                                                <h1 class="h4 text-gray-900 mb-4">Library Member - PPKD Jakarta Pusat
                                                 </h1>
                                             </div>
                                             <form class="user" method="post">
                                                 <!-- input form -->
                                                 <div class="form-group">
-                                                    <input name="name" type="text" class="form-control form-control-user" placeholder="Name...">
+                                                    <input name="name" type="text" class="form-control form-control-user"
+                                                        placeholder="Name...">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="birthplace" type="text" class="form-control form-control-user" placeholder="Birth Place...">
+                                                    <input name="birthplace" type="text"
+                                                        class="form-control form-control-user"
+                                                        placeholder="Birth Place...">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="birthdate" type="date" class="form-control form-control-user">
+                                                    <input name="birthdate" type="date"
+                                                        class="form-control form-control-user">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="email" class="form-control form-control-user" type="email" placeholder="Email...">
+                                                    <input name="email" class="form-control form-control-user"
+                                                        type="email" placeholder="Email...">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="phone" type="tel" class="form-control form-control-user" placeholder="Phone Number...">
+                                                    <input name="phone" type="tel"
+                                                        class="form-control form-control-user"
+                                                        placeholder="Phone Number...">
                                                 </div>
                                                 <div class="form-group">
                                                     <input name="gender" type="radio" id="gender" value="Men"> Men
                                                     <input name="gender" type="radio" id="gender" value="Women"> Women
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="address" type="text" class="form-control form-control-user" placeholder="Address...">
+                                                    <input name="address" type="text"
+                                                        class="form-control form-control-user"
+                                                        placeholder="Address...">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="school" type="text" class="form-control form-control-user" placeholder="Education School...">
+                                                    <input name="school" type="text"
+                                                        class="form-control form-control-user"
+                                                        placeholder="Education School...">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="job" type="text" class="form-control form-control-user" placeholder="Job...">
+                                                    <input name="job" type="text" class="form-control form-control-user"
+                                                        placeholder="Job...">
                                                 </div>
                                                 <div class="form-group">
-                                                    <input name="socialmedia" type="text" class="form-control form-control-user" placeholder="Social Media...">
+                                                    <input name="socialmedia" type="text"
+                                                        class="form-control form-control-user"
+                                                        placeholder="Social Media...">
                                                 </div>
-                                                <button type="submit" name="submit" class="btn btn-primary btn-user btn-block">
+                                                <button type="submit" name="submit"
+                                                    class="btn btn-primary btn-user btn-block">
                                                     Submit Data
                                                 </button>
                                                 <hr>

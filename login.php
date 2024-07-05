@@ -6,48 +6,57 @@ if (isset($_POST['submit'])) {
     $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
     $password = filter_input(INPUT_POST, 'password', FILTER_SANITIZE_SPECIAL_CHARS);
 
+    // Establish MySQLi connection
+    $db_library = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+    // Check MySQLi connection
+    if ($db_library->connect_error) {
+        die("Connection failed: " . $db_library->connect_error);
+    }
+
     $query = "SELECT * FROM users WHERE email = ?";
     $result = $db_library->prepare($query);
-    $result->bindParam(1, $email);
+    $result->bind_param("s", $email); // Bind parameter
     $result->execute();
+    $result->store_result();
 
-    if ($row = $result->fetch(PDO::FETCH_ASSOC)) {
+    if ($result->num_rows > 0) {
+        $result->bind_result($id, $name, $email, $id_level, $hashed_password); // Bind result variables
+        $result->fetch();
+        
         // Verify password (assuming SHA-1 hashing for this example)
-        if (sha1($password) === $row['password']){
-            // Authentication successful, set sessi on variables
-            if (isset($row["id_level"]) == 4) {
-                $_SESSION['name'] = $row['name']; // Example session variable
-                $_SESSION['id_level'] = $row['id_level']; // Example session variable
-    
-                // Redirect to dashboard or another secure page
-                header("Location: /library/dashboard.php");
-                exit;
-            } else if (isset($row["id_level"]) == 5) {
-                $_SESSION['name'] = $row['name']; // Example session variable
-                $_SESSION['id_level'] = $row['id_level']; // Example session variable
-    
-                // Redirect to dashboard or another secure page
-                header("Location: /library/dashboardinstructor.php");
-                exit;
-            } else if (isset($row["id_level"]) == 6) {
-                $_SESSION['name'] = $row['name']; // Example session variable
-                $_SESSION['id_level'] = $row['id_level']; // Example session variable
-    
-                // Redirect to dashboard or another secure page
-                header("Location: /library/dashboardinstructor.php");
-                exit;
+        if (sha1($password) === $hashed_password) {
+            // Authentication successful, set session variables based on id_level
+            $_SESSION['name'] = $name; // Example session variable
+            $_SESSION['id_level'] = $id_level; // Example session variable
+            
+            // Redirect based on id_level
+            switch ($id_level) {
+                case 4:
+                    header("Location: /library/dashboard.php");
+                    break;
+                case 5:
+                case 6:
+                    header("Location: /library/dashboardinstructor.php");
+                    break;
+                default:
+                    // Handle other id_level cases if needed
+                    break;
             }
-
+            exit;
         } else {
             // Invalid password
             header("Location: /library/login.php?error-access-failed");
             exit;
         }
     } else {
-        // users not found
+        // User not found
         header("Location: /library/login.php?error-access-failed");
         exit;
     }
+
+    $result->close(); // Close statement
+    $db_library->close(); // Close connection
 }
 ?>
 

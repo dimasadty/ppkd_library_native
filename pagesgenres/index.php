@@ -8,13 +8,13 @@ if (!isset($_SESSION['name'])) {
     header("location:/library/login.php?error-access-failed");
     exit; // Ensure to exit after redirection
 }
-// Query to get levels
-$query = "SELECT * FROM levels ORDER BY id DESC";
+// Query to get genres
+$query = "SELECT * FROM genres ORDER BY id DESC";
 $result = $db_library->query($query);
-$levels = [];
+$genres = [];
 if ($result) {
     while ($row = $result->fetch_assoc()) {
-        $levels[] = $row;
+        $genres[] = $row;
     }
 } else {
     echo "Query failed: " . $db_library->error;
@@ -23,10 +23,10 @@ if ($result) {
 // If the delete parameter is present, delete the level
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
-    $deleteStmt = $db_library->prepare("DELETE FROM levels WHERE id = ?");
+    $deleteStmt = $db_library->prepare("DELETE FROM genres WHERE id = ?");
     $deleteStmt->bind_param('i', $id); // 'i' indicates the type of the parameter (integer)
     if ($deleteStmt->execute()) {
-        header("location:/library/pageslevels/index.php?notif=delete-success");
+        header("location:/library/pagesgenres/index.php?notif=delete-success");
         exit;
     } else {
         echo "Error: ". $deleteStmt->error;
@@ -41,7 +41,7 @@ if (isset($_GET['delete'])) {
     <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>Library PPKD Jakarta Pusat - levels</title>
+    <title>Library PPKD Jakarta Pusat - genres</title>
     <!-- plugins:css -->
     <?php include '../inc/css.php'; ?>
 </head>
@@ -57,33 +57,33 @@ if (isset($_GET['delete'])) {
         <!-- main panel -->
         <div class="container-fluid">
             <!-- Page Heading -->
-            <h1 class="h3 mb-4 text-gray-800">Levels</h1>
+            <h1 class="h3 mb-4 text-gray-800">genres</h1>
             <div class="card">
                 <div class="card-body">
                     <div align="right">
-                        <a href="/library/pageslevels/add.php" class="btn btn-primary mb-3">Add More</a>
+                        <a href="/library/pagesgenres/add.php" class="btn btn-primary mb-3">Add More</a>
                     </div>
                     <div class="table responsive">
                         <table class="table table-bordered" id="">
                             <thead>
                                 <tr>
                                     <th>No</th>
-                                    <th>Levels</th>
+                                    <th>genres</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <?php
                                 $no = 1;
-                                foreach ($levels as $dataLevels) { ?>
+                                foreach ($genres as $datagenres) { ?>
                                     <tr>
                                         <td><?php echo $no++; ?></td>
-                                        <td><?php echo htmlspecialchars($dataLevels['level_name']); ?></td>
+                                        <td><?php echo htmlspecialchars($datagenres['genrename']); ?></td>
                                         <td>
-                                            <a href="/library/pageslevels/add.php?edit=<?php echo $dataLevels['id']; ?>"
-                                                class="btn btn-primary btn-sm">Change Levels</a>
+                                            <a href="/library/pagesgenres/add.php?edit=<?php echo $datagenres['id']; ?>"
+                                                class="btn btn-primary btn-sm">Change genres</a>
                                             <a onclick="return confirm('Are You Sure To Delete This Data?')"
-                                                href="/library/pageslevels/index.php?delete=<?php echo $dataLevels['id']; ?>"
+                                                href="/library/pagesgenres/index.php?delete=<?php echo $datagenres['id']; ?>"
                                                 class="btn btn-danger btn-sm">Delete</a>
                                         </td>
                                     </tr>
