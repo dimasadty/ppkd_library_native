@@ -17,7 +17,7 @@
     <div class="navbar-menu-wrapper d-flex align-items-top">
         <ul class="navbar-nav">
             <li class="nav-item fw-semibold d-none d-lg-block ms-0">
-                <h1 class="welcome-text">Holla! <span class="text-black fw-bold"><?php echo $dataUsers['name']; ?></span></h1>
+                <h1 class="welcome-text">Holla! <span class="text-black fw-bold"><?=$_SESSION['name']?></span></h1>
             </li>
         </ul>
         <ul class="navbar-nav ms-auto">
@@ -37,14 +37,13 @@
                 </a>
             </li>
             <li class="nav-item dropdown d-none d-lg-block user-dropdown">
-                <a class="nav-link" id="UserDropdown" href="#" data-bs-toggle="dropdown" aria-expanded="false">
-                    <img class="img-xs rounded-circle" src="assets/images/faces/face8.jpg" alt="Profile image"> 
+                <a class="nav-link" id="UserDropdown" href="" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img class="img-xs rounded-circle" src="/library/assets/admin/images/jakarta.png" alt="Profile image"> 
                 </a>
                 <div class="dropdown-menu dropdown-menu-right navbar-dropdown" aria-labelledby="UserDropdown">
                     <div class="dropdown-header text-center">
-                        <img class="img-md rounded-circle" src="assets/images/faces/face8.jpg" alt="Profile image">
-                        <p class="mb-1 mt-3 fw-semibold"><?php echo $dataUsers['name']; ?></p>
-                        <p class="fw-light text-muted mb-0"><?php echo $dataUsers['email']; ?></p>
+                        <p class="mb-1 mt-3 fw-semibold"><?=$_SESSION['name']?></p>
+                        <p class="fw-light text-muted mb-0"><?=$_SESSION['email']?></p>
                     </div>
                     <a class="dropdown-item"><i class="dropdown-item-icon mdi mdi-account-outline text-primary me-2"></i> My Profile <span class="badge badge-pill badge-danger">1</span></a>
                     <a class="dropdown-item"><i class="dropdown-item-icon mdi mdi-message-text-outline text-primary me-2"></i> Messages</a>

@@ -7,7 +7,7 @@
       </a>
     </li>
     <li class="nav-item nav-category">Menu</li>
-    <?php if ($_SESSION['id_level'] == 4) { // Only show to administrators 
+    <?php if ($_SESSION['id_level'] == 1) { // Only show to administrators 
    ?>
       <li class="nav-item">
         <a class="nav-link" data-bs-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
@@ -46,6 +46,12 @@
         <span class="menu-title">Settings</span>
         <i class="menu-arrow"></i>
       </a>
+      <div class="collapse" id="auth">
+        <ul class="nav flex-column sub-menu">
+          <li class="nav-item"><a class="nav-link" href="/library/pagesmenus/index.php?page=menu&store">Customized Menu</a></li>
+          <li class="nav-item"><a class="nav-link" href="/library/pagescards/index.php">Customized Card</a></li>
+        </ul>
+      </div>
     </li>
   </ul>
 </nav>
